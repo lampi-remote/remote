@@ -3,6 +3,7 @@
 import RPi.GPIO as GPIO
 from input.components import *
 
+# The maps the "controls" for our remote to their circuit components
 class Controls:
 
     setup_complete = False

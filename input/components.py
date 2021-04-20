@@ -7,6 +7,7 @@ BUTTON_BOUNCETIME = 100
 LONG_PRESS_TIMEOUT = 1.0
 LED_FLASH_TIME = 0.1
 
+# Manages a simple LED circuit component, connected to any arbitrary pin
 class LED:
 
     pin = 0
@@ -40,6 +41,8 @@ class LED:
             self._shutoff_timer.cancel()
             self._shutoff_timer = None
 
+# Manages a simple button circuit button, connected to any arbitrary pin
+# Event handler can be assigned via onPress and onLongPress
 class Button:
 
     # Metadata
