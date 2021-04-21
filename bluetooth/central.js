@@ -1,9 +1,8 @@
 var noble = require('noble');
+var allowed_devices = require('./../bt_devices.json');
 
 // List of allowed devices
-const devices = [
-  "B8:27:EB:6B:C8:97"
-];
+const devices = allowed_devices.devices;
 // last advertising data received
 var lastAdvertising = {
 };
@@ -14,17 +13,19 @@ function onDeviceChanged(addr, data) {
 
 function onDiscovery(peripheral) {
   // do we know this device?
-  if (devices.indexOf(peripheral.address)<0) return;
-  // does it have manufacturer data with Espruino/Puck.js's UUID
-  if (!peripheral.advertisement.manufacturerData ||
-      peripheral.advertisement.manufacturerData[0]!=0x90 ||
-      peripheral.advertisement.manufacturerData[1]!=0x05) return;
-  // get just our data
-  var data = peripheral.advertisement.manufacturerData.slice(2);
-  // check for changed services
-  if (lastAdvertising[peripheral.address] != data.toString())
-    onDeviceChanged(peripheral.address, data);
-  lastAdvertising[peripheral.address] = data;
+  if (devices.indexOf(peripheral.address.toUpperCase())<0) return;
+
+  console.log("Connected!");
+//   // does it have manufacturer data with Espruino/Puck.js's UUID
+//   if (!peripheral.advertisement.manufacturerData ||
+//       peripheral.advertisement.manufacturerData[0]!=0x90 ||
+//       peripheral.advertisement.manufacturerData[1]!=0x05) return;
+//   // get just our data
+//   var data = peripheral.advertisement.manufacturerData.slice(2);
+//   // check for changed services
+//   if (lastAdvertising[peripheral.address] != data.toString())
+//     onDeviceChanged(peripheral.address, data);
+//   lastAdvertising[peripheral.address] = data;
 }
 
 noble.on('stateChange',  function(state) {
