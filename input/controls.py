@@ -3,12 +3,12 @@
 import RPi.GPIO as GPIO
 from input.components import *
 
-# The maps the "controls" for our remote to their circuit components
+# Maps the "controls" for our remote to their circuit components
 class Controls:
 
     setup_complete = False
 
-    led = LED(7)
+    led = RGBLED(29, 31, 33)
     power_btn = Button("Power", 8)
     bri_up_btn = Button("Brightness Up", 10)
     bri_down_btn = Button("Brightness Down", 12)
