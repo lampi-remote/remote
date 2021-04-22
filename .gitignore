@@ -1,4 +1,5 @@
 .DS_Store
 .idea/**
 .vscode/**
+bt_devices.json
 **/__pycache__/**
