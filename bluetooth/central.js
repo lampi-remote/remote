@@ -40,9 +40,8 @@ noble.on('discover', function (peripheral) {
             console.log('found characteristic:', characteristic.uuid);
 
             if (characteristic.uuid === '0004a7d3d8a44fea81741736e808c066') {
-              console.log("works");
               LampiOnOffCharacteristic = characteristic;
-              togglePower();
+              setInterval(togglePower, 500);
             }
           }); // characterisics
         }); // discover characteristics
@@ -71,14 +70,24 @@ noble.on('scanStop', function () {
 });
 
 function togglePower() {
-  var power = new Buffer(1);
-  power.writeUInt8(0x1, 0);
-
-  LampiOnOffCharacteristic.write(power, false, function(err) {
+  LampiOnOffCharacteristic.read(function (err, data) {
     if (!err) {
-      console.log("works");
+      var power = new Buffer(1);
+      console.log(data[0] === 1);
+      if (data[0] === 1) {
+        power.writeUInt8(0x0, 0);
+      } else {
+        power.writeUInt8(0x1, 0);
+      }
+      LampiOnOffCharacteristic.write(power, false, function (err) {
+        if (!err) {
+          console.log("works");
+        } else {
+          console.log("error");
+        }
+      });
     } else {
       console.log("error");
     }
-  })
+  });
 }
