@@ -8,7 +8,7 @@ class Controls:
 
     setup_complete = False
 
-    led = LED(7)
+    led = RGBLED("Main", 29, 31, 33)
     power_btn = Button("Power", 8)
     bri_up_btn = Button("Brightness Up", 10)
     bri_down_btn = Button("Brightness Down", 12)

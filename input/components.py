@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
 
+import logging
 import RPi.GPIO as GPIO
 import threading
-
-BUTTON_BOUNCETIME = 100
-LONG_PRESS_TIMEOUT = 1.0
-LED_FLASH_TIME = 0.1
 
 # Manages a simple LED circuit component, connected to any arbitrary pin
 class LED:
 
-    pin = 0
-
-    on = False
-    _shutoff_timer = None
+    FLASH_TIME = 0.1
 
     def __init__(self, pin_num):
         self.pin = pin_num
+        self.on = False
+        self._shutoff_timer = None
 
     def setup(self):
         GPIO.setup(self.pin, GPIO.OUT)
@@ -27,7 +23,7 @@ class LED:
         if (self._shutoff_timer is not None):
             self._shutoff_timer.cancel()
 
-        self._shutoff_timer = threading.Timer(LED_FLASH_TIME, self.turn_off)
+        self._shutoff_timer = threading.Timer(LED.FLASH_TIME, self.turn_off)
 
     def turn_on(self):
         on = True
@@ -45,25 +41,20 @@ class LED:
 # Event handler can be assigned via onPress and onLongPress
 class Button:
 
-    # Metadata
-    name = "Unnamed button"
-    pin = 0
-
-    # State
-    pressed = False
-    _long_press_timer = None
-
-    # Event handlers
-    onPress = None
-    onLongPress = None
+    BOUNCETIME = 100
+    LONG_PRESS_TIMEOUT = 1.0
 
     def __init__(self, name, pin_num):
         self.name = name
         self.pin = pin_num
+        self.pressed = False
+        self._long_press_timer = None
+        self.onPress = None
+        self.onLongPress = None
 
     def setup(self):
         GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        GPIO.add_event_detect(self.pin, GPIO.BOTH, callback=self._gpio_evt, bouncetime=BUTTON_BOUNCETIME)
+        GPIO.add_event_detect(self.pin, GPIO.BOTH, callback=self._gpio_evt, bouncetime=Button.BOUNCETIME)
 
     def _gpio_evt(self, channel):
         if (not self.pressed and GPIO.input(self.pin) == GPIO.HIGH):
@@ -72,8 +63,9 @@ class Button:
             self._on_unpress()
 
     def _on_press(self):
+        logging.debug('Button %s pressed', self.name)
         self.pressed = True
-        self._long_press_timer = threading.Timer(LONG_PRESS_TIMEOUT, self._on_longpress)
+        self._long_press_timer = threading.Timer(Button.LONG_PRESS_TIMEOUT, self._on_longpress)
         self._long_press_timer.start()
 
         if self.onPress is not None:
@@ -84,5 +76,45 @@ class Button:
         self._long_press_timer.cancel()
 
     def _on_longpress(self):
+        logging.debug('Button %s long pressed', self.name)
         if self.onLongPress is not None:
             self.onLongPress()
+
+class RGBLED:
+
+    OFF = [False, False, False]
+    RED = [True, False, False]
+    GREEN = [False, True, False]
+    BLUE = [False, False, True]
+
+    def __init__(self, name, rpin, gpin, bpin):
+        self.name = name
+        self.rpin = rpin
+        self.gpin = gpin
+        self.bpin = bpin
+        self._shutoff_timer = None
+
+    def setup(self):
+        GPIO.setup(self.rpin, GPIO.OUT)
+        GPIO.setup(self.gpin, GPIO.OUT)
+        GPIO.setup(self.bpin, GPIO.OUT)
+
+    def set_rgb(self, rgb):
+        GPIO.output(self.rpin, rgb[0])
+        GPIO.output(self.gpin, rgb[1])
+        GPIO.output(self.bpin, rgb[2])
+
+    def flash_rgb(self, rgb):
+        self.set_rgb(rgb)
+
+        if (self._shutoff_timer is not None):
+            self._shutoff_timer.cancel()
+
+        self._shutoff_timer = threading.Timer(LED.FLASH_TIME, self.turn_off)
+
+    def turn_off(self):
+        self.set_rgb(RGBLED.OFF)
+
+        if (self._shutoff_timer is not None):
+            self._shutoff_timer.cancel()
+            self._shutoff_timer = None
