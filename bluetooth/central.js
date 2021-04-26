@@ -1,12 +1,11 @@
 var noble = require('noble');
+
 var allowed_devices = require('./../bt_devices.json');
 
-const OUR_SERVICE_UUID = '7a4bbfe6-999f-4717-b63a-066e06971f59';
-const LAMP_UUID = '38CA7A14-1A49-A2F1-EA69-E81D076B2457';
 const LAMP_SERVICE = '0001a7d3d8a44fea81741736e808c066';
-// const LAMP_SERVICE = '0001a7d3-d8a4-4fea-8174-1736e808c066';
 
 var LampiOnOffCharacteristic = null;
+var onOffState;
 
 // List of allowed devices
 const devices = allowed_devices.devices;
@@ -19,15 +18,17 @@ noble.on('discover', function (peripheral) {
   peripheral.connect(function (err) {
     console.log('connected!');
 
-    // peripheral.discoverAllServicesAndCharacteristics(function (error, services, characteristics) {
-    //   services.forEach(function (service) {
-    //     console.log('found service:', service.uuid);
-    //   });
+    /*
+    peripheral.discoverAllServicesAndCharacteristics(function (error, services, characteristics) {
+         services.forEach(function (service) {
+           console.log('found service:', service.uuid);
+         });
 
-    //   characteristics.forEach(function (characteristic) {
-    //     console.log('found characteristic:', characteristic.uuid);
-    //   });
-    // });
+         characteristics.forEach(function (characteristic) {
+           console.log('found characteristic:', characteristic.uuid);
+         });
+    });
+    */
 
     peripheral.discoverServices([LAMP_SERVICE], function (err, services) {
       console.log(services)
@@ -73,7 +74,6 @@ function togglePower() {
   LampiOnOffCharacteristic.read(function (err, data) {
     if (!err) {
       var power = new Buffer(1);
-      console.log(data[0] === 1);
       if (data[0] === 1) {
         power.writeUInt8(0x0, 0);
       } else {
@@ -81,7 +81,7 @@ function togglePower() {
       }
       LampiOnOffCharacteristic.write(power, false, function (err) {
         if (!err) {
-          console.log("works");
+          console.log("success");
         } else {
           console.log("error");
         }
@@ -91,3 +91,4 @@ function togglePower() {
     }
   });
 }
+
