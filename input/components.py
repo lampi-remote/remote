@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import logging
 import RPi.GPIO as GPIO
 import threading
+
+LOG_EVENTS = False
 
 # Manages a simple LED circuit component, connected to any arbitrary pin
 class LED:
@@ -63,20 +64,31 @@ class Button:
             self._on_unpress()
 
     def _on_press(self):
-        logging.debug('Button %s pressed', self.name)
+        if (LOG_EVENTS):
+            print('Button {} pressed'.format(self.name))
+
         self.pressed = True
         self._long_press_timer = threading.Timer(Button.LONG_PRESS_TIMEOUT, self._on_longpress)
         self._long_press_timer.start()
 
-        if self.onPress is not None:
-            self.onPress()
-
     def _on_unpress(self):
         self.pressed = False
-        self._long_press_timer.cancel()
+
+        if (LOG_EVENTS):
+            print('Button {} released'.format(self.name))
+
+        if (self._long_press_timer is not None):
+            self._long_press_timer.cancel()
+            self._long_press_timer = None
+
+            if self.onPress is not None:
+                self.onPress()
 
     def _on_longpress(self):
-        logging.debug('Button %s long pressed', self.name)
+        if (LOG_EVENTS):
+            print('Button {} long pressed'.format(self.name))
+
+        self._long_press_timer = None
         if self.onLongPress is not None:
             self.onLongPress()
 

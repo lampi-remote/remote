@@ -1,11 +1,20 @@
 var noble = require('noble');
+<<<<<<< Updated upstream
 
 var allowed_devices = require('./../bt_devices.json');
+=======
+var fs = require('fs');
+const path = require('path');
+>>>>>>> Stashed changes
 
 const LAMP_SERVICE = '0001a7d3d8a44fea81741736e808c066';
 
 var LampiOnOffCharacteristic = null;
 var onOffState;
+
+// Read allowed devices
+const rawJSON = fs.readFileSync(path.resolve(__dirname, '../bt_devices.json'));
+var allowed_devices = JSON.parse(rawJSON);
 
 // List of allowed devices
 const devices = allowed_devices.devices;
@@ -91,4 +100,7 @@ function togglePower() {
     }
   });
 }
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes

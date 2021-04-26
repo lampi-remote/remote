@@ -1,35 +1,81 @@
-import asyncio
-import logging
+#!/usr/bin/env python3
 
-from bleak import BleakClient
-from bleak import BleakScanner
+from bluepy.btle import Scanner, Peripheral
+from bluetooth.lampi import Lampi
 
+LOG_DISCOVERY = False
 
-BT_DEVICE = "B8:27:EB:6B:C8:97"
-LAMPI_SERVICE = "0001a7d3-d8a4-4fea-8174-1736e808c066"
-LAMPI_ONOFF_CHARACTERISTIC = "0004a7d3-d8a4-4fea-8174-1736e808c066"
+class CentralManager:
 
+    SCAN_DURATION = 10.0
 
-async def run():
-    async with BleakScanner() as scanner:
-        await asyncio.sleep(5.0)
-        devices = await scanner.get_discovered_devices()
-        print(devices)
-    for d in devices:
-        print(d.address)
-        if d.address == BT_DEVICE:
-            await read(d)
+    def __init__(self):
+        self._scanner = Scanner()
+        self._lamps = []
 
-async def read(address):
-    client = BleakClient(address)
-    try:
-        await client.connect()
-        model_number = await client.read_gatt_char(LAMPI_ONOFF_CHARACTERISTIC)
-        print("Model Number: {0}".format("".join(map(chr, model_number))))
-    except Exception as e:
-        print(e)
-    finally:
-        await client.disconnect()
+    def scan(self):
+        # Clear existing connected lamps
+        for lamp in self._lamps:
+            lamp.disconnect()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(run())
+        self._lamps = []
+
+        # Scan for new lamps to connect to
+        print("Scanning for devices...")
+
+        scanResult = self._scanner.scan(CentralManager.SCAN_DURATION)
+
+        # List all discovered devices (for debugging purposes)
+        if (LOG_DISCOVERY):
+            print("Known devices:")
+
+            if (len(scanResult) == 0):
+                print(" None")
+            else:
+                for device in scanResult:
+                    print(" - {}".format(device.addr))
+                    for (adtype, desc, value) in device.getScanData():
+                        print("   - ({}) {}: {}".format(adtype, desc, value))
+
+        # Connect to any lamps found
+        for device in scanResult:
+            if (Lampi.isLampCandidate(device)):
+                lamp = Lampi(device)
+                lamp.validate()
+                if (lamp.isValid):
+                    print("Connected to a lamp with MAC address {}".format(device.addr))
+                    self._lamps.append(lamp)
+                else:
+                    lamp.disconnect()
+
+        print("Scan complete")
+
+    # Discard any lamps that are no longer connected
+    def pruneLamps(self):
+        for i in range(0, len(self._lamps)):
+            lamp = self._lamps[i]
+            if (not lamp.isConnected()):
+                print("Pruned {}".format(lamp.addr))
+                self._lamps.pop(i)
+                i -= 1
+
+    def handleDiscovery(self, device, isNewDevice, isNewData):
+        pass
+
+    def toggleOnOff(self):
+        print("Toggling on/off")
+        self.pruneLamps()
+        for lamp in self._lamps:
+            lamp.toggleOnOff()
+
+    def brightnessUp(self):
+        print("Sending brightness up")
+        self.pruneLamps()
+        for lamp in self._lamps:
+            lamp.brightnessUp()
+
+    def brightnessDown(self):
+        print("Sending brightness down")
+        self.pruneLamps()
+        for lamp in self._lamps:
+            lamp.brightnessDown()
