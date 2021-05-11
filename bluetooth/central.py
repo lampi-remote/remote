@@ -84,4 +84,4 @@ class CentralManager:
         print("Starting Preset", str(number))
         self.pruneLamps()
         for lamp in self._lamps:
-            lamp.startPreset(number)
+            lamp.setPreset(number)

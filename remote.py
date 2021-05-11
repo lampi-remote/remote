@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 import RPi.GPIO as GPIO
 from bluetooth.central import CentralManager
@@ -39,6 +38,9 @@ class Remote:
         self._controls.power_btn.onLongPress = self.scan
         self._controls.bri_up_btn.onPress = self.brightnessUp
         self._controls.bri_down_btn.onPress = self.brightnessDown
+        self._controls.preset_1_btn.onPress = self.preset1
+        self._controls.preset_2_btn.onPress = self.preset2
+        self._controls.preset_3_btn.onPress = self.preset3
         print("Handlers set up")
 
     def scan(self):
@@ -64,6 +66,21 @@ class Remote:
             print("Brightness down pressed, but no devices connected to receive the event")
         else:
             self._bt.brightnessDown()
+
+    def _doPreset(self, num):
+        if (not self._btSetup):
+            print("Preset {} pressed, but no devices connected to receive the event".format(num))
+        else:
+            self._bt.preset(num)
+
+    def preset1(self):
+        self._doPreset(1)
+
+    def preset2(self):
+        self._doPreset(2)
+
+    def preset3(self):
+        self._doPreset(3)
 
     def cleanup(self):
         print("Cleaning up GPIO")
