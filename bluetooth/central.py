@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 
-from bluepy.btle import Scanner, Peripheral
+from bluepy.btle import Scanner, Peripheral, DefaultDelegate
 from bluetooth.lampi import Lampi
 
-LOG_DISCOVERY = False
+class CentralManager(DefaultDelegate):
 
-class CentralManager:
-
-    SCAN_DURATION = 10.0
+    SCAN_COUNT = 5
+    SCAN_INTERVAL = 2.0
 
     def __init__(self):
-        self._scanner = Scanner()
+        DefaultDelegate.__init__(self)
+        self._scanner = Scanner().withDelegate(self)
         self._lamps = []
+        self._candidateFound = False
+        self.isConnected = False
 
     def scan(self):
+        self.isConnected = False
+
         # Clear existing connected lamps
         for lamp in self._lamps:
             lamp.disconnect()
@@ -23,19 +27,19 @@ class CentralManager:
         # Scan for new lamps to connect to
         print("Scanning for devices...")
 
-        scanResult = self._scanner.scan(CentralManager.SCAN_DURATION)
+        self._candidateFound = False
+        self._scanner.clear()
+        self._scanner.start()
 
-        # List all discovered devices (for debugging purposes)
-        if (LOG_DISCOVERY):
-            print("Known devices:")
+        for iter in range(0, CentralManager.SCAN_COUNT):
+            self._scanner.process(CentralManager.SCAN_INTERVAL)
+            if (self._candidateFound):
+                print("Candidate found after {} scan(s). Ending early".format(iter + 1))
+                break
 
-            if (len(scanResult) == 0):
-                print(" None")
-            else:
-                for device in scanResult:
-                    print(" - {}".format(device.addr))
-                    for (adtype, desc, value) in device.getScanData():
-                        print("   - ({}) {}: {}".format(adtype, desc, value))
+        self._scanner.stop()
+
+        scanResult = self._scanner.getDevices()
 
         # Connect to any lamps found
         for device in scanResult:
@@ -45,10 +49,17 @@ class CentralManager:
                 if (lamp.isValid):
                     print("Connected to a lamp with MAC address {}".format(device.addr))
                     self._lamps.append(lamp)
+                    self.isConnected = True
                 else:
                     lamp.disconnect()
 
         print("Scan complete")
+
+    def handleDiscovery(self, device, isNew, _):
+        if isNew and device.connectable:
+            if (Lampi.isLampCandidate(device)):
+                self._candidateFound = True
+                print(" • Candidate found with MAC address {}".format(device.addr))
 
     # Discard any lamps that are no longer connected
     def pruneLamps(self):
@@ -58,9 +69,6 @@ class CentralManager:
                 print("Pruned {}".format(lamp.addr))
                 self._lamps.pop(i)
                 i -= 1
-
-    def handleDiscovery(self, device, isNewDevice, isNewData):
-        pass
 
     def toggleOnOff(self):
         print("Toggling on/off")

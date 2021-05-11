@@ -1,4 +1,4 @@
-from bluepy.btle import Peripheral
+from bluepy.btle import Peripheral, BTLEDisconnectError
 
 class Lampi(Peripheral):
 
@@ -54,8 +54,16 @@ class Lampi(Peripheral):
 
     # Validate whether the current device is a LAMPI or not
     def validate(self):
+        services = []
+
+        try:
+            services = self.getServices()
+        except BTLEDisconnectError as e:
+            print("BTLE disconnect")
+            return
+
         self.isChecked = True
-        for service in self.getServices():
+        for service in services:
             if (Lampi.serviceIsLampiService(service)):
                 self.lampService = service
                 self.isValid = True
