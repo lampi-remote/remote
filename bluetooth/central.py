@@ -79,3 +79,9 @@ class CentralManager:
         self.pruneLamps()
         for lamp in self._lamps:
             lamp.brightnessDown()
+
+    def preset(self, number):
+        print("Starting Preset", str(number))
+        self.pruneLamps()
+        for lamp in self._lamps:
+            lamp.startPreset(number)
