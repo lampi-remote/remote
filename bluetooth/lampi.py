@@ -111,8 +111,9 @@ class Lampi(Peripheral):
 
     def setPreset(self, number):
         current = self.presetChar.read()[0]
+        next = number
+
         if current == number:
-            self.presetChar.write(0x0, True)
-        else:
-            nextBytes = bytes([number])
-            self.presetChar.write(nextBytes, True)
+            next = 0
+
+        self.presetChar.write(bytes([next]), True)
