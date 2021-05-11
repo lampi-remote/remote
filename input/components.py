@@ -113,6 +113,8 @@ class RGBLED:
         self.gpin = gpin
         self.bpin = bpin
         self._shutoff_timer = None
+        self._flash_counter = 0
+        self._flash_rgb = None
 
     def setup(self):
         GPIO.setup(self.rpin, GPIO.OUT)
@@ -125,11 +127,14 @@ class RGBLED:
         GPIO.output(self.gpin, RGBLED._asVoltage(rgb[1]))
         GPIO.output(self.bpin, RGBLED._asVoltage(rgb[2]))
 
-    def flash_rgb(self, rgb):
+    def flash_rgb(self, rgb, times=0):
         self.set_rgb(rgb)
 
         if (self._shutoff_timer is not None):
             self._shutoff_timer.cancel()
+
+        self._flash_counter = times
+        self._flash_rgb = rgb
 
         self._shutoff_timer = threading.Timer(LED.FLASH_TIME, self.turn_off)
         self._shutoff_timer.start()
@@ -140,3 +145,7 @@ class RGBLED:
         if (self._shutoff_timer is not None):
             self._shutoff_timer.cancel()
             self._shutoff_timer = None
+
+        if (self._flash_counter > 0):
+            self._shutoff_timer = threading.Timer(LED.FLASH_TIME, lambda : self.flash_rgb(self._flash_rgb, self._flash_counter - 1))
+            self._shutoff_timer.start()

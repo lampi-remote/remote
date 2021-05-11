@@ -18,6 +18,8 @@ class Remote:
         self._setup_controls()
         self._setup_handlers()
 
+        self._controls.led.flash_rgb(RGBLED.CYAN, 3)
+
     def persist(self):
         try:
             message = input("Running persistently. Long-press the power button to scan for lamps.\nPress enter or ^C to exit\n\n")
@@ -58,14 +60,7 @@ class Remote:
             self._bt.scan()
             self._blinkStop()
 
-            result = RGBLED.RED
-
-            if (self._bt.isConnected):
-                result = RGBLED.GREEN
-
-            self._controls.led.flash_rgb(result)
-            flash_timer = Timer(LED.FLASH_TIME * 2.0, lambda : self._controls.led.flash_rgb(result))
-            flash_timer.start()
+            self._controls.led.flash_rgb(RGBLED.GREEN if self._bt.isConnected else RGBLED.RED, 3)
 
 
     def powerPress(self):
